@@ -110,6 +110,14 @@ public class MQTTHelper {
         }
     }
 
+    public void publishMessage(String message, String topic) {
+        try {
+            mqttAndroidClient.publish(topic, message.getBytes(), 0, false);
+        } catch (MqttException e) {
+            e.printStackTrace();
+        }
+    }
+
     public String getName() {
         return name;
     }
