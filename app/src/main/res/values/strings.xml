@@ -19,4 +19,12 @@
     <string name="dismiss_error">Dismiss</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="control_led">Control LED</string>
+    <string name="temperature_on">Temperature OFF</string>
+    <string name="temperature_off">Temperature ON</string>
+    <string name="humidity_on">Humidity OFF</string>
+    <string name="humidity_off">Humidity ON</string>
+    <string name="open_chat">Open Chat</string>
+    <string name="temperature">Temperature:</string>
+    <string name="humidity">Humidity:</string>
 </resources>

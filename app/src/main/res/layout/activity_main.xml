@@ -10,7 +10,7 @@
         android:id="@+id/btnOpenChat"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Open Chat"
+        android:text="@string/open_chat"
         android:layout_centerInParent="true" />
 
     <!-- TextViews to display sensor data -->
@@ -20,7 +20,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/btnOpenChat"
         android:layout_marginTop="20dp"
-        android:text="Temperature: "
+        android:text="@string/temperature"
         android:textSize="16sp" />
 
     <TextView
@@ -29,16 +29,39 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/textViewTemperature"
         android:layout_marginTop="10dp"
-        android:text="Humidity: "
+        android:text="@string/humidity"
         android:textSize="16sp" />
 
     <!-- Button to control LED -->
+
+
+    <ToggleButton
+        android:id="@+id/toggleTemperature"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textOn="@string/temperature_on"
+        android:textOff="@string/temperature_off"
+        android:layout_below="@id/textViewHumidity"
+        android:checked="true" />
+
+    <ToggleButton
+        android:id="@+id/toggleHumidity"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/toggleTemperature"
+        android:textOn="@string/humidity_on"
+        android:textOff="@string/humidity_off"
+        android:checked="true" />
+
     <Button
         android:id="@+id/btnControlLED"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/textViewHumidity"
+        android:layout_below="@+id/toggleHumidity"
         android:layout_marginTop="20dp"
-        android:text="Control LED" />
+        android:text="@string/control_led" />
+
+
+
 
 </RelativeLayout>
