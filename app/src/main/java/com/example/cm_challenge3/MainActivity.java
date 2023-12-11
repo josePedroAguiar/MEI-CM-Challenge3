@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.ToggleButton;
@@ -19,6 +20,7 @@ import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 
@@ -26,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
 
     private final String topicTemp = "topictemp";
     private final String topicHum = "topichum";
+
     private TextView textViewTemperature;
     private TextView textViewHumidity;
     private MqttClient mqttClient;
@@ -80,7 +83,13 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void messageArrived(String topic, MqttMessage message) {
-                    runOnUiThread(() -> handleIncomingMessage(topic, message));
+                    runOnUiThread(() -> {
+                        try {
+                            handleIncomingMessage(topic, message);
+                        } catch (MqttException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
                 }
 
                 @Override
@@ -99,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void handleIncomingMessage(String topic, MqttMessage message) {
+    private void handleIncomingMessage(String topic, MqttMessage message) throws MqttException {
         // Verifica o estado dos botões de alternância
         String payload = new String(message.getPayload());
 
@@ -114,9 +123,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @SuppressLint("SetTextI18n")
-    private void handleTemperatureData(String payload) {
+    private void handleTemperatureData(String payload) throws MqttException {
         textViewTemperature.setText("Temperature: " + payload + "C");
         double temp = Double.parseDouble(payload);
+        mqttClient.publish(topicTemp, new MqttMessage(payload.getBytes()));
         // Example: Check if the temperature exceeds a threshold
         if (temp > 30.0) {
             showTemperatureAlert();
@@ -180,6 +190,31 @@ public class MainActivity extends AppCompatActivity {
         // Show the notification
         notificationManager.notify(1, builder.build());
     }
+
+
+    public void turnOnLED(View view) {
+        publishMessage("ON");
+    }
+
+    public void turnOffLED(View view) {
+        publishMessage("OFF");
+    }
+
+    private void publishMessage(String message) {
+        Log.d("MeuApp", "Antes de publicar a mensagem MQTT para ligar/desligar o LED");
+
+        try {
+
+            String topicLED = "topicled";
+            mqttClient.publish(topicLED, new MqttMessage(message.getBytes()));
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.e("MeuApp", "Erro ao publicar a mensagem MQTT: " + e.getMessage());
+        }
+
+        Log.d("MeuApp", "Depois de publicar a mensagem MQTT para ligar/desligar o LED");
+    }
+
 
 
     @Override

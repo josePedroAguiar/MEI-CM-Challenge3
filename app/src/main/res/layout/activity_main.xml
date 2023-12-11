@@ -62,6 +62,23 @@
         android:text="@string/control_led" />
 
 
+    <Button
+        android:id="@+id/buttonTurnOn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/btnControlLED"
+        android:text="@string/turn_on_led"
+        android:onClick="turnOnLED"/>
+
+    <Button
+        android:id="@+id/buttonTurnOff"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/buttonTurnOn"
+        android:text="@string/turn_off_led"
+        android:onClick="turnOffLED"/>
+
+
 
 
 </RelativeLayout>
