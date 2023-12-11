@@ -27,4 +27,6 @@
     <string name="open_chat">Open Chat</string>
     <string name="temperature">Temperature:</string>
     <string name="humidity">Humidity:</string>
+    <string name="turn_on_led">Turn On LED</string>
+    <string name="turn_off_led">Turn Off LED</string>
 </resources>
