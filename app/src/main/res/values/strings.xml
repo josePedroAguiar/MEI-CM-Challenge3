@@ -29,4 +29,6 @@
     <string name="humidity">Humidity:</string>
     <string name="turn_on_led">Turn On LED</string>
     <string name="turn_off_led">Turn Off LED</string>
+    <string name="led_on">LED ON</string>
+    <string name="led_off">LED OFF</string>
 </resources>
