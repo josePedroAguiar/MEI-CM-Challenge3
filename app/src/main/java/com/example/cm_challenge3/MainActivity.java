@@ -29,6 +29,9 @@ public class MainActivity extends AppCompatActivity {
     private final String topicTemp = "topictemp";
     private final String topicHum = "topichum";
 
+    private final String topicLED = "topicled";
+
+
     private TextView textViewTemperature;
     private TextView textViewHumidity;
     private MqttClient mqttClient;
@@ -68,6 +71,15 @@ public class MainActivity extends AppCompatActivity {
             // Atualiza os valores ao mudar o estado do ToggleButton de humidade
             updateDisplayedValues();
         });
+        ToggleButton toggleLED = findViewById(R.id.toggleLED);
+        toggleLED.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            // Verifique o estado do ToggleButton e envie a mensagem MQTT adequada para controlar o LED
+            if (isChecked) {
+                publishMessage("ON");
+            } else {
+                publishMessage("OFF");
+            }
+        });
 
         connectMQTT();
     }
@@ -102,7 +114,7 @@ public class MainActivity extends AppCompatActivity {
             mqttClient.connect(options);
             mqttClient.subscribe(topicTemp);
             mqttClient.subscribe(topicHum);
-
+            mqttClient.subscribe(topicLED);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -117,16 +129,17 @@ public class MainActivity extends AppCompatActivity {
 
         if (topic.equals(topicTemp) && showTemperature) {
             handleTemperatureData(payload);
-        } else if (topic.equals(topicHum) && showHumidity) {
+        }
+        if (topic.equals(topicHum) && showHumidity) {
             handleHumidityData(payload);
         }
     }
 
     @SuppressLint("SetTextI18n")
-    private void handleTemperatureData(String payload) throws MqttException {
+    private void handleTemperatureData(String payload) {
         textViewTemperature.setText("Temperature: " + payload + "C");
         double temp = Double.parseDouble(payload);
-        mqttClient.publish(topicTemp, new MqttMessage(payload.getBytes()));
+        //mqttClient.publish(topicTemp, new MqttMessage(payload.getBytes()));
         // Example: Check if the temperature exceeds a threshold
         if (temp > 30.0) {
             showTemperatureAlert();
@@ -140,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Example: Check if humidity is too high
         if (hum > 80.0) {
-            showHumidityAlert();
+           showHumidityAlert();
         }
     }
 
@@ -192,21 +205,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void turnOnLED(View view) {
-        publishMessage("ON");
-    }
-
-    public void turnOffLED(View view) {
-        publishMessage("OFF");
-    }
-
     private void publishMessage(String message) {
         Log.d("MeuApp", "Antes de publicar a mensagem MQTT para ligar/desligar o LED");
 
         try {
-
-            String topicLED = "topicled";
             mqttClient.publish(topicLED, new MqttMessage(message.getBytes()));
+
         } catch (Exception e) {
             e.printStackTrace();
             Log.e("MeuApp", "Erro ao publicar a mensagem MQTT: " + e.getMessage());

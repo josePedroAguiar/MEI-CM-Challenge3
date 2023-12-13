@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Estado quando o ToggleButton está ligado -->
+    <item android:drawable="@color/led_off" android:state_checked="true" />
+    <!-- Estado padrão quando o ToggleButton está desligado -->
+    <item android:drawable="@color/led_on" />
+</selector>
