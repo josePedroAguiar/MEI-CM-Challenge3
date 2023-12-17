@@ -10,14 +10,21 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.ToggleButton;
+import android.content.Intent;
+import android.widget.Button;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NotificationCompat;
 
-import com.anychart.AnyChart;
 import com.anychart.AnyChartView;
 import com.anychart.chart.common.dataentry.DataEntry;
 import com.anychart.chart.common.dataentry.ValueDataEntry;
+import com.anychart.core.cartesian.series.Line;
+
+import com.anychart.AnyChart;
+import com.anychart.chart.common.dataentry.DataEntry;
+import com.anychart.charts.Cartesian;
+import com.anychart.enums.MarkerType;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
@@ -25,15 +32,12 @@ import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
-import com.anychart.charts.Cartesian;
-import com.anychart.core.cartesian.series.Line;
 
-import com.anychart.data.Mapping;
-import com.anychart.data.Set;
-import com.anychart.enums.TooltipPositionMode;
-
-import java.util.List;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -42,17 +46,26 @@ public class MainActivity extends AppCompatActivity {
 
     private final String topicLED = "topicled";
 
+
     private TextView textViewTemperature;
     private TextView textViewHumidity;
     private MqttClient mqttClient;
 
-    private Cartesian cartesian;
-    private List<DataEntry> seriesData;
-    private Line series;
+    private Cartesian temperatureChart;
+    private Cartesian humidityChart;
+
+    private List<DataEntry> temperatureDataEntries;
+    private List<DataEntry> humidityDataEntries;
+    private AnyChartView anyChartViewTemperature;
+    private AnyChartView anyChartViewHumidity;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        anyChartViewTemperature = findViewById(R.id.any_chart_view_temperature);
+        anyChartViewHumidity = findViewById(R.id.any_chart_view_humidity);
 
         textViewTemperature = findViewById(R.id.textViewTemperature);
         textViewHumidity = findViewById(R.id.textViewHumidity);
@@ -60,20 +73,11 @@ public class MainActivity extends AppCompatActivity {
         ToggleButton toggleTemperature = findViewById(R.id.toggleTemperature);
         ToggleButton toggleHumidity = findViewById(R.id.toggleHumidity);
 
-        // Listener for ToggleButtons
-        toggleTemperature.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            // Update values when the temperature ToggleButton state changes
-            updateDisplayedValues();
-        });
-
-        toggleHumidity.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            // Update values when the humidity ToggleButton state changes
-            updateDisplayedValues();
-        });
+        toggleTemperature.setOnCheckedChangeListener((buttonView, isChecked) -> updateDisplayedValues());
+        toggleHumidity.setOnCheckedChangeListener((buttonView, isChecked) -> updateDisplayedValues());
 
         ToggleButton toggleLED = findViewById(R.id.toggleLED);
         toggleLED.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            // Check the state of the LED ToggleButton and send the appropriate MQTT message to control the LED
             if (isChecked) {
                 publishMessage("ON");
             } else {
@@ -81,64 +85,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        AnyChartView anyChartView = findViewById(R.id.any_chart_view);
-        anyChartView.setProgressBar(findViewById(R.id.progress_bar));
+        temperatureChart = AnyChart.line();
+        humidityChart = AnyChart.line();
 
-        cartesian = AnyChart.line();
-
-        cartesian.animation(true);
-        cartesian.padding(10d, 20d, 5d, 20d);
-        cartesian.crosshair().enabled(true);
-        cartesian.crosshair().yLabel(true);
-        cartesian.tooltip().positionMode(TooltipPositionMode.POINT);
-
-        cartesian.title("Trend of Sales of the Most Popular Products of ACME Corp.");
-        cartesian.yAxis(0).title("Number of Bottles Sold (thousands)");
-        cartesian.xAxis(0).labels().padding(5d, 5d, 5d, 5d);
-
-        seriesData = new ArrayList<>();
-        series = cartesian.line(seriesData);
-
-        anyChartView.setChart(cartesian);
-        anyChartView.setChart(cartesian);
+        temperatureDataEntries = new ArrayList<>();
+        humidityDataEntries = new ArrayList<>();
 
         connectMQTT();
     }
-
-    private void updateGraphData(String x, String value, String value2) {
-        CustomDataEntry newDataEntry = new CustomDataEntry(x, Double.parseDouble(value), Double.parseDouble(value2), 0);
-        seriesData.add(newDataEntry);
-
-        Set set = Set.instantiate();
-        set.data(seriesData);
-
-        Mapping seriesMapping = set.mapAs("{ x: 'x', value: 'value' }");
-        series.data(seriesMapping);
-    }
-
-    private void handleTemperatureData(String payload) {
-        textViewTemperature.setText("Temperature: " + payload + "C");
-        double temp = Double.parseDouble(payload);
-        if (temp > 30.0) {
-            showTemperatureAlert();
-        }
-
-        // Update the graph data when new temperature data is received
-        updateGraphData(String.valueOf(System.currentTimeMillis()), payload, "0");
-    }
-
-    private void handleHumidityData(String payload) {
-        textViewHumidity.setText("Humidity: " + payload + "%");
-        double hum = Double.parseDouble(payload);
-
-        if (hum > 80.0) {
-            showHumidityAlert();
-        }
-
-        // Update the graph data when new humidity data is received
-        updateGraphData(String.valueOf(System.currentTimeMillis()), "0", payload);
-    }
-
     private void connectMQTT() {
         try {
             String broker = "tcp://broker.hivemq.com:1883";
@@ -176,36 +130,95 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void handleIncomingMessage(String topic, MqttMessage message) throws MqttException {
+        // Verifica o estado dos botões de alternância
         String payload = new String(message.getPayload());
 
         boolean showTemperature = ((ToggleButton) findViewById(R.id.toggleTemperature)).isChecked();
         boolean showHumidity = ((ToggleButton) findViewById(R.id.toggleHumidity)).isChecked();
 
-        if (topic.equals(topicTemp) && showTemperature) {
-            handleTemperatureData(payload);
+        if (topic.equals(topicTemp)) {
+            temperatureDataEntries.add(new ValueDataEntry(getTimestamp(), Double.parseDouble(payload)));
+            updateTemperatureChart();
+
+
+            if (showTemperature) {
+                handleTemperatureData(payload);
+            }
+        } else if (topic.equals(topicHum)) {
+            humidityDataEntries.add(new ValueDataEntry(getTimestamp(), Double.parseDouble(payload)));
+            updateHumidityChart();
+
+            if (showHumidity) {
+                handleHumidityData(payload);
+            }
         }
-        if (topic.equals(topicHum) && showHumidity) {
-            handleHumidityData(payload);
+    }
+    private String getTimestamp() {
+        // Get the current timestamp in the desired format
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        return sdf.format(new Date());
+    }
+    private void updateHumidityChart() {
+        humidityChart.removeAllSeries();
+        Line series = humidityChart.line(humidityDataEntries);
+        series.name("Humidity");
+        series.hovered().markers().enabled(true);
+        series.hovered().markers().type(MarkerType.CIRCLE).size(4d);
+        anyChartViewHumidity.setChart(humidityChart);
+    }
+
+    private void updateTemperatureChart() {
+        temperatureChart.removeAllSeries();
+        Line series = temperatureChart.line(temperatureDataEntries);
+        series.name("Temperature");
+        series.hovered().markers().enabled(true);
+        series.hovered().markers().type(MarkerType.CIRCLE).size(4d);
+        anyChartViewTemperature.setChart(temperatureChart);
+    }
+    @SuppressLint("SetTextI18n")
+    private void handleTemperatureData(String payload) {
+        textViewTemperature.setText("Temperature: " + payload + "C");
+        double temp = Double.parseDouble(payload);
+        //mqttClient.publish(topicTemp, new MqttMessage(payload.getBytes()));
+        // Example: Check if the temperature exceeds a threshold
+        if (temp > 30.0) {
+            showTemperatureAlert();
+        }
+    }
+
+    @SuppressLint("SetTextI18n")
+    private void handleHumidityData(String payload) {
+        textViewHumidity.setText("Humidity: " + payload + "%");
+        double hum = Double.parseDouble(payload);
+
+        // Example: Check if humidity is too high
+        if (hum > 80.0) {
+            showHumidityAlert();
         }
     }
 
     private void updateDisplayedValues() {
+        // Verifica os estados atuais dos ToggleButtons
         boolean showTemperature = ((ToggleButton) findViewById(R.id.toggleTemperature)).isChecked();
         boolean showHumidity = ((ToggleButton) findViewById(R.id.toggleHumidity)).isChecked();
 
+        // Se os ToggleButtons estiverem marcados, atualiza os valores exibidos
         if (showTemperature) {
             textViewTemperature.setVisibility(View.VISIBLE);
+            anyChartViewTemperature.setVisibility(View.VISIBLE);
         } else {
             textViewTemperature.setVisibility(View.GONE);
+            anyChartViewTemperature.setVisibility(View.GONE);
         }
 
         if (showHumidity) {
             textViewHumidity.setVisibility(View.VISIBLE);
+            anyChartViewHumidity.setVisibility(View.VISIBLE);
         } else {
             textViewHumidity.setVisibility(View.GONE);
+            anyChartViewHumidity.setVisibility(View.GONE);
         }
     }
-
     private void showTemperatureAlert() {
         showNotification("Temperature Alert", "Temperature is too high!");
     }
@@ -217,32 +230,39 @@ public class MainActivity extends AppCompatActivity {
     private void showNotification(String title, String message) {
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
+        // Create a notification channel for Android Oreo and above
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel("default_channel", "Default Channel", NotificationManager.IMPORTANCE_DEFAULT);
             notificationManager.createNotificationChannel(channel);
         }
 
+        // Create the notification using NotificationCompat.Builder
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "default_channel")
-                .setSmallIcon(R.drawable.ic_notification)
+                .setSmallIcon(R.drawable.ic_notification)  // Ensure this matches the actual resource name
                 .setContentTitle(title)
                 .setContentText(message)
                 .setAutoCancel(true);
 
+        // Show the notification
         notificationManager.notify(1, builder.build());
     }
 
+
     private void publishMessage(String message) {
-        Log.d("MeuApp", "Before publishing MQTT message to turn on/off the LED");
+        Log.d("MeuApp", "Antes de publicar a mensagem MQTT para ligar/desligar o LED");
 
         try {
             mqttClient.publish(topicLED, new MqttMessage(message.getBytes()));
+
         } catch (Exception e) {
             e.printStackTrace();
-            Log.e("MeuApp", "Error publishing MQTT message: " + e.getMessage());
+            Log.e("MeuApp", "Erro ao publicar a mensagem MQTT: " + e.getMessage());
         }
 
-        Log.d("MeuApp", "After publishing MQTT message to turn on/off the LED");
+        Log.d("MeuApp", "Depois de publicar a mensagem MQTT para ligar/desligar o LED");
     }
+
+
 
     @Override
     protected void onDestroy() {
@@ -253,14 +273,6 @@ public class MainActivity extends AppCompatActivity {
             }
         } catch (Exception e) {
             e.printStackTrace();
-        }
-    }
-
-    private class CustomDataEntry extends ValueDataEntry {
-        CustomDataEntry(String x, Number value, Number value2, Number value3) {
-            super(x, value);
-            setValue("value2", value2);
-            setValue("value3", value3);
         }
     }
 }

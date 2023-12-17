@@ -5,40 +5,49 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <!-- AnyChartView -->
+    <!-- AnyChartView for Temperature -->
     <com.anychart.AnyChartView
-        android:id="@+id/any_chart_view"
-        android:layout_width="375dp"
-        android:layout_height="305dp"
-        android:layout_margin="10dp" />
+        android:id="@+id/any_chart_view_temperature"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_margin="16dp"
+        android:layout_marginBottom="8dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
 
-    <!-- ProgressBar -->
-    <ProgressBar
-        android:id="@+id/progress_bar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"/>
+    <!-- AnyChartView for Humidity -->
+    <com.anychart.AnyChartView
+        android:id="@+id/any_chart_view_humidity"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_margin="16dp"
+        android:layout_below="@id/any_chart_view_temperature"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginBottom="8dp" />
+
 
     <!-- TextViews to display sensor data -->
     <TextView
         android:id="@+id/textViewTemperature"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:layout_below="@id/any_chart_view"
+        android:layout_below="@id/any_chart_view_humidity"
+        android:layout_marginTop="16dp"
         android:text="@string/temperature"
-        android:textSize="16sp" />
+        android:textSize="16sp"
+        android:layout_centerHorizontal="true" />
 
     <TextView
         android:id="@+id/textViewHumidity"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/textViewTemperature"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="8dp"
         android:text="@string/humidity"
-        android:textSize="16sp" />
+        android:textSize="16sp"
+        android:layout_centerHorizontal="true" />
 
-    <!-- Button to control LED -->
     <ToggleButton
         android:id="@+id/toggleTemperature"
         android:layout_width="wrap_content"
@@ -46,7 +55,9 @@
         android:textOn="@string/temperature_on"
         android:textOff="@string/temperature_off"
         android:layout_below="@id/textViewHumidity"
-        android:checked="true" />
+        android:checked="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp" />
 
     <ToggleButton
         android:id="@+id/toggleHumidity"
@@ -55,17 +66,20 @@
         android:layout_below="@+id/toggleTemperature"
         android:textOn="@string/humidity_on"
         android:textOff="@string/humidity_off"
-        android:checked="true" />
+        android:checked="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="8dp" />
 
     <ToggleButton
         android:id="@+id/toggleLED"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/toggleHumidity"
-        android:layout_marginTop="32dp"
-        android:background="@drawable/toggle_selector"
-        android:checked="false"
         android:textOff="@string/led_on"
-        android:textOn="@string/led_off" />
+        android:textOn="@string/led_off"
+        android:checked="false"
+        android:background="@drawable/toggle_selector"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="8dp" />
 
 </RelativeLayout>
